@@ -117,7 +117,7 @@ class TLDetector(object):
             self.prev_light_loc = None
             return False
 
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
 
         #Get classification
         return self.light_classifier.get_classification(cv_image)
@@ -131,7 +131,8 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        light = None
+        light = 289 # global way-point index of 1st TL's stopping line
+        #TODO find correct light based on cars position.
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
@@ -142,7 +143,7 @@ class TLDetector(object):
 
         if light:
             state = self.get_light_state(light)
-            return light_wp, state
+            return light, state
         self.waypoints = None
         return -1, TrafficLight.UNKNOWN
 

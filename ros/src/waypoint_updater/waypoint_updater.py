@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+
+import sys
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from nav_msgs.msg import Path
 import tf
-
 import math
 
 '''
@@ -33,8 +34,11 @@ class WaypointUpdater(object):
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
-        # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 
+        self.set_speed_mps = rospy.get_param("~set_speed_mps", 13.88)
+
+        rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
+        
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -49,6 +53,9 @@ class WaypointUpdater(object):
 	self.current_pose_id = -1
 	self.final_waypoints = Lane()
 
+        self.base_frame = "base_footprint"
+        self.map_frame = "world"
+
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -59,7 +66,8 @@ class WaypointUpdater(object):
         br = tf.TransformBroadcaster()
         br.sendTransform((self.current_pose.pose.position.x, self.current_pose.pose.position.y, 0),
                          (self.current_pose.pose.orientation.x,self.current_pose.pose.orientation.y,self.current_pose.pose.orientation.z,self.current_pose.pose.orientation.w),
-                        rospy.Time.now(), "base_footprint", "world")
+                        rospy.Time.now(), self.base_frame, self.map_frame)
+
 
 
 	# If no previous map matching --> whole map, else --> only short area backwards and forwards
@@ -112,6 +120,11 @@ class WaypointUpdater(object):
 	    if ( id_waypoint >= len(self.waypoints)):
 	      id_waypoint = 1
 
+            # modify vehicle speed if required via launch file
+            self.waypoints[id_waypoint].twist.twist.linear.x = self.set_speed_mps
+
+
+            #print self.waypoints[id_waypoint]
 	    waypoint = self.waypoints[id_waypoint]
 	    self.final_waypoints.waypoints.append(waypoint)
 
