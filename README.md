@@ -10,11 +10,27 @@
 
 To learn more about the Git-flow process, refer to this [page](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
 
+Your Github steps
+======================
+Initialising your repository
+======================
+1 Fork the repository https://github.com/rdjondo/CarND-Capstone/
+2 Clone your fork to your machine
+3 Change your cloned repo to your branch
 
-+ Created feature branch for work on traffic-light detection with tensorflow
-+ Created feature branch for work on traffic-light detection without tensorflow (simulation only)
-+ Created feature branch for work on waypoint calculation
-+ Created feature branch for work on drive-by-wire
+======================
+Work normally
+======================
+1. commit changes
+2. Push your changes to your Github fork
+
+======================
+When your are ready to share your changes
+======================
+1 (if there are updates from other devs) pull from  https://github.com/rdjondo/CarND-Capstone/
+2 push to your remote fork
+3 share with a pull request to the same branch on https://github.com/rdjondo/CarND-Capstone/
+
 
 ### Native Installation
 
