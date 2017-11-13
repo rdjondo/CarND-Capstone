@@ -1,5 +1,5 @@
 
-# Git-flow process
+## Git-flow process
 1. Each team member must fork this repository (rdjondo/CarND-Capstone) to their own Github profile. The master branch of this repository will be the "synchronisation" branch.
 2. In the course of their work, team members push their changes to their own Github repository.
 3. Also, the developers regularly pull-in changes from others from the rdjondo/CarND-Capston/master to benefit from the latest changes.
@@ -10,23 +10,18 @@
 
 To learn more about the Git-flow process, refer to this [page](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
 
-Your Github steps
-======================
-Initialising your repository
-======================
+### Your Github steps
+
+#### Initialising your repository
 1 Fork the repository https://github.com/rdjondo/CarND-Capstone/
 2 Clone your fork to your machine
 3 Change your cloned repo to your branch
 
-======================
-Work normally
-======================
+#### Work normally
 1. commit changes
 2. Push your changes to your Github fork
 
-======================
-When your are ready to share your changes
-======================
+#### When your are ready to share your changes
 1 (if there are updates from other devs) pull from  https://github.com/rdjondo/CarND-Capstone/
 2 push to your remote fork
 3 share with a pull request to the same branch on https://github.com/rdjondo/CarND-Capstone/
