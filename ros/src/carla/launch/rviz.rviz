@@ -159,21 +159,22 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
+        base_footprint:
+          base_link:
+            base_front:
+              {}
+            steer_fl:
+              wheel_fl:
+                {}
+            steer_fr:
+              wheel_fr:
+                {}
+            wheel_rl:
+              {}
+            wheel_rr:
+              {}
         world:
-          base_footprint:
-            base_link:
-              base_front:
-                {}
-              steer_fl:
-                wheel_fl:
-                  {}
-              steer_fr:
-                wheel_fr:
-                  {}
-              wheel_rl:
-                {}
-              wheel_rr:
-                {}
+          {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
