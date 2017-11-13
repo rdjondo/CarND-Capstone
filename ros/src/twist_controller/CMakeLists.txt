@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(twist_controller)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
-# add_definitions(-std=c++11)
+ add_definitions(-std=c++11)
+add_compile_options(-std=c++11 -O2)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -19,6 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+# Third party dependencies
+find_package(cmake_modules REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -106,11 +110,15 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES twist_controller
 #  CATKIN_DEPENDS dbw_mkz_msgs geometry_msgs roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
+
+
+
+
 
 ###########
 ## Build ##
@@ -120,13 +128,28 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/twist_controller.cpp
 # )
+
+
+set(SRCS
+  src/LowLevelControllerNode.cpp
+)
+
+add_library(low_level_controller ${SRCS})
+target_link_libraries(low_level_controller
+  ${catkin_LIBRARIES}
+  )
+
+add_executable(low_level_controller_node src/main.cpp)
+target_link_libraries(low_level_controller_node low_level_controller)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
