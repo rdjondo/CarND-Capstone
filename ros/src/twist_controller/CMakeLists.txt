@@ -24,6 +24,37 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(cmake_modules REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# To pull sources using Git
+include(ExternalProject) 
+
+
+set(CPPAD_LIB_LOCATION ${CMAKE_BINARY_DIR}/../devel/coin-or-libs/cppad)
+set(IPOPT_SRC_LOCATION ${CMAKE_BINARY_DIR}/../devel/coin-or-libs/ipopt)
+
+# Get source files for Model predictive control optimization
+# Import Coin-Or library for Interior Point Optimization
+ExternalProject_Add(Get_Coin_Or_Ipopt
+    GIT_REPOSITORY https://github.com/coin-or/Ipopt.git
+    SOURCE_DIR ${IPOPT_SRC_LOCATION}
+    CONFIGURE_COMMAND ./configure
+    BUILD_COMMAND make
+    BUILD_IN_SOURCE 1
+    INSTALL_COMMAND make install    
+)
+
+# Get source files for Model predictive control optimization
+# Import Coin-Or library for Automatic differentiation
+ExternalProject_Add(Get_Coin_Or_CppAD
+    DEPENDS Get_Coin_Or_Ipopt
+    GIT_REPOSITORY https://github.com/coin-or/CppAD.git
+    CMAKE_GENERATOR "Unix Makefiles"
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE=RELEASE
+    CMAKE_ARGS -D cppad_prefix=${CPPAD_LIB_LOCATION}
+    CMAKE_ARGS -D ipopt_prefix=${IPOPT_SRC_LOCATION}
+)
+
+
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -132,6 +163,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
 )
+
+
+# Include libraries for Model predictive control optimization
+include_directories(${CPPAD_LIB_LOCATION}/include ${IPOPT_SRC_LOCATION}/include)
+link_directories(${CPPAD_LIB_LOCATION}/lib ${IPOPT_SRC_LOCATION}/lib)
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
