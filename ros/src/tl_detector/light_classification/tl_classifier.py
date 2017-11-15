@@ -3,10 +3,12 @@ from __future__ import division, print_function # TODO: maybe hide in ROS
 import tensorflow as tf
 import numpy as np
 
+import cv2
+
 # from styx_msgs.msg import TrafficLight # TODO:  enable for ROS
 
 PATH_SSD_PROTOBUF = 'frozen_model.pb' #TODO: where to put a pre-trained TF SSD in ROS?
-THRESH_SCORE      = 0.5
+THRESH_SCORE      = 0.2
 TL_CLASS          = 10  # COCO
 
 class TLClassifier(object):
@@ -69,17 +71,40 @@ class TLClassifier(object):
 
 
     def classify_bbox (self, image, bbox):
-        """classify bbox of the image
+        """Classify a bounding bbox in the image.
+
+
         TrafficLight.UNKNOWN, TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN
         """
 
-        result = 0 # TODO
+        thresh_hue = 0, 15, 45, 90   # threshold to separate red yellow green and rest in the HSV space
+        thresh_area_ratio = 0.01     # classification will be ignored if area ratio is smaller
 
-        y0,x0,y1,x1 = bbox
-        crop = image [y0:y1, x0:x1]
-        print (crop.shape)
+        result = 3 # if nothing detected -> UNKNOWN
 
-        return -1 #TODO
+        y0, x0, y1, x1 = bbox
+        crop = image[y0:y1, x0:x1]
+
+
+        hsv = cv2.cvtColor (crop, cv2.COLOR_RGB2HSV)
+        mask = np.zeros_like(hsv)
+
+        # both hsv and mask are of shape (rows, cols, 3)
+        for i in range(3):
+            lower = np.array ([ thresh_hue[i  ],   0, 200 ])
+            upper = np.array ([ thresh_hue[i+1], 255, 255 ])
+
+            mask [..., i] = cv2.inRange (hsv, lower, upper)
+
+        area_ratios = np.count_nonzero(mask, axis=(0, 1)) / np.product(mask.shape[:2])
+
+        # print (area_ratios) # TODO some logging on that
+
+        if (area_ratios > thresh_area_ratio).any():
+            result = area_ratios.argmax()
+
+        return [0,1,2,4] [result]
+        # return [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN] [result] # TODO
 
 
 
@@ -96,7 +121,7 @@ class TLClassifier(object):
 
         """
 
-        result = 0 # TODO TrafficLight.UNKNOWN
+        result = 4 # TODO TrafficLight.UNKNOWN
 
         try:
             assert image.ndim     == 3, 'Expecting images of shape (nRows, nCols, nChannels)'
@@ -106,7 +131,16 @@ class TLClassifier(object):
             tl_boxes, tl_scores = self.get_boxes(image)
 
             # classify only the box with highest confidence
-            result = self.classify_bbox (image, tl_boxes[0])
+            # result = self.classify_bbox (image, tl_boxes[0])
+
+            # classify all detected lights
+            lights = np.array ([self.classify_bbox(image, bbox) for bbox in tl_boxes])
+
+            # in simulator require 2 or 3 lights of the same colour, 1 is not enough
+            if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
+                result = lights[0]
+
+
 
         except Exception as e:
             print (e) # TODO logging
@@ -117,8 +151,6 @@ class TLClassifier(object):
 
 
 if __name__ == '__main__':
-    import cv2
-
     TLC = TLClassifier()
 
     for fn in 'tl_0_g.png frame_009275.jpg simss0.jpg tl.jpg tl2.jpg tl3.jpg'.split() [:1]:
