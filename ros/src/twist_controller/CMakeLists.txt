@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(twist_controller)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
@@ -59,8 +59,6 @@ ExternalProject_Add(Get_Coin_Or_CppAD
     CMAKE_ARGS -D cppad_prefix=${CPPAD_SRC_LOCATION}
     CMAKE_ARGS -D ipopt_prefix=${IPOPT_SRC_LOCATION}/build
 )
-
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
