@@ -5,11 +5,22 @@ import numpy as np
 
 import cv2
 
-# from styx_msgs.msg import TrafficLight # TODO:  enable for ROS
+import rospy
+import os.path
 
-PATH_SSD_PROTOBUF = 'frozen_model.pb' #TODO: where to put a pre-trained TF SSD in ROS?
+# for out-of-ROS testing
+try:
+    from styx_msgs.msg import TrafficLight
+except ImportError:
+    import TrafficLight
+
+
+FILE_MODEL        = 'ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb' # f0158b9e01424dc5bd20f000bcdad847
+
 THRESH_SCORE      = 0.2
 TL_CLASS          = 10  # COCO
+
+LIGHT_NAMES = 'RED YELLOW GREEN undefined UNKNOWN'.split()
 
 class TLClassifier(object):
     def __init__(self):
@@ -17,21 +28,32 @@ class TLClassifier(object):
         Loads a pretrained SSD detector and intializes a TF session.
         """
 
-        detection_graph = tf.Graph()
+        try:
+            path_to_model = '{}/{}'.format(os.path.dirname (os.path.realpath(__file__)), FILE_MODEL)
 
-        with detection_graph.as_default():
-            od_graph_def = tf.GraphDef()
-            with tf.gfile.GFile (PATH_SSD_PROTOBUF, 'rb') as fid:
-                serialized_graph = fid.read()
-                od_graph_def.ParseFromString(serialized_graph)
-                tf.import_graph_def(od_graph_def, name='')
+            rospy.loginfo ('\n\n\nInitializing tensorflow model from ' + path_to_model)
 
-        self._image_tensor      = detection_graph.get_tensor_by_name('image_tensor:0')       # Input tensor expecting shape (n_images, n_rows, n_cols, 3)
-        self._detection_boxes   = detection_graph.get_tensor_by_name('detection_boxes:0')    # Each box represents a part of the image where a particular object was detected.
-        self._detection_scores  = detection_graph.get_tensor_by_name('detection_scores:0')   # Each score represent how level of confidence for each of the objects.
-        self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')  # Classes
+            detection_graph = tf.Graph()
 
-        self._TF_session = tf.Session(graph=detection_graph)
+            with detection_graph.as_default():
+                od_graph_def = tf.GraphDef()
+                with tf.gfile.GFile (path_to_model, 'rb') as fid:
+                    serialized_graph = fid.read()
+                    od_graph_def.ParseFromString(serialized_graph)
+                    tf.import_graph_def(od_graph_def, name='')
+
+            self._image_tensor      = detection_graph.get_tensor_by_name('image_tensor:0')       # Input tensor expecting shape (n_images, n_rows, n_cols, 3)
+            self._detection_boxes   = detection_graph.get_tensor_by_name('detection_boxes:0')    # Each box represents a part of the image where a particular object was detected.
+            self._detection_scores  = detection_graph.get_tensor_by_name('detection_scores:0')   # Each score represent how level of confidence for each of the objects.
+            self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')  # Classes
+
+            self._TF_session = tf.Session(graph=detection_graph)
+
+        except Exception as e:
+            rospy.logfatal ('\n\n\n')
+            rospy.logfatal ('Failed to load / initialize Tensorflow model. Did you already downloaded and renamed it?')
+            rospy.logfatal ('Reason follows:')
+            rospy.logfatal (e)
 
 
 
@@ -66,6 +88,7 @@ class TLClassifier(object):
         scores  =  scores.squeeze()
 
         i_filtered = np.argwhere((classes == TL_CLASS) & (scores > min_score)).flatten()
+        rospy.loginfo ('TLC: Box scores {}'.format (scores[i_filtered]))
 
         return boxes[i_filtered], scores[i_filtered]
 
@@ -96,15 +119,22 @@ class TLClassifier(object):
 
             mask [..., i] = cv2.inRange (hsv, lower, upper)
 
-        area_ratios = np.count_nonzero(mask, axis=(0, 1)) / np.product(mask.shape[:2])
-
-        # print (area_ratios) # TODO some logging on that
+#       area_ratios = np.count_nonzero(mask, axis=(0, 1)) / np.product(mask.shape[:2])
+        area_ratios = np.array ([
+             np.count_nonzero(mask[...,0]),
+             np.count_nonzero(mask[...,1]),
+             np.count_nonzero(mask[...,2]),
+        ], dtype=np.float) / np.product(mask.shape[:2])
 
         if (area_ratios > thresh_area_ratio).any():
             result = area_ratios.argmax()
 
-        return [0,1,2,4] [result]
-        # return [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN] [result] # TODO
+        rospy.loginfo ('TLC: Box Hue ratios = {:.3f} {:.3f} {:.3f} => {}'.format(
+            area_ratios[0], area_ratios[1], area_ratios[2],
+            LIGHT_NAMES [result]
+        ))
+
+        return [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN] [result]
 
 
 
@@ -121,7 +151,7 @@ class TLClassifier(object):
 
         """
 
-        result = 4 # TODO TrafficLight.UNKNOWN
+        result = TrafficLight.UNKNOWN
 
         try:
             assert image.ndim     == 3, 'Expecting images of shape (nRows, nCols, nChannels)'
@@ -136,15 +166,16 @@ class TLClassifier(object):
             # classify all detected lights
             lights = np.array ([self.classify_bbox(image, bbox) for bbox in tl_boxes])
 
+#            rospy.loginfo ('TLC: Colours {}', format (lights))
+
             # in simulator require 2 or 3 lights of the same colour, 1 is not enough
             if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
                 result = lights[0]
 
-
+            rospy.loginfo ('TLC: Overall light prediction: {}'.format (LIGHT_NAMES[result]))
 
         except Exception as e:
-            print (e) # TODO logging
-            pass
+            rospy.logwarn ('TLC: {}'.format (e))
 
         return result
 
