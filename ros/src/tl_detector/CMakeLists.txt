@@ -189,6 +189,19 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+
+# To download trained model from the internet
+set(TENSORFLOW_MDL_DIR ${CMAKE_BINARY_DIR}/../src/tl_detector/light_classification)
+set(TENSORFLOW_FILE_NAME ${TENSORFLOW_MDL_DIR}/ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb)
+set(TENSORFLOW_MDL_URL https://drive.google.com/uc?export=download&id=1thYxLbnEQU6srwZsrc92RCDE0vFb4Yo- )
+
+file(
+  DOWNLOAD ${TENSORFLOW_MDL_URL} ${TENSORFLOW_FILE_NAME}
+  SHOW_PROGRESS
+)
+
+# add_custom_target(Download_TF_model ALL SOURCES ${TENSORFLOW_FILE_NAME})
+     
 #############
 ## Testing ##
 #############
