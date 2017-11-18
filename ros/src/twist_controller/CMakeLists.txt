@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.3)
 project(twist_controller)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
@@ -22,43 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 # Third party dependencies
 find_package(cmake_modules REQUIRED)
-
 find_package(Eigen3 REQUIRED)
-#include_directories(${EIGEN3_INCLUDE_DIR})
-
-# To pull sources using Git
-include(ExternalProject) 
-
-
-set(CPPAD_SRC_LOCATION ${CMAKE_BINARY_DIR}/../devel/coin-or-libs/cppad)
-set(IPOPT_SRC_LOCATION ${CMAKE_BINARY_DIR}/../devel/coin-or-libs/ipopt)
-
-
-# Get source files for Model predictive control optimization
-# Import Coin-Or library for Interior Point Optimization
-ExternalProject_Add(Get_Coin_Or_Ipopt
-    GIT_REPOSITORY https://github.com/coin-or/Ipopt.git
-    DOWNLOAD_DIR ${IPOPT_SRC_LOCATION}/src
-    SOURCE_DIR ${IPOPT_SRC_LOCATION}/src
-    BINARY_DIR ${IPOPT_SRC_LOCATION}/build
-    CONFIGURE_COMMAND ../src/configure
-    BUILD_COMMAND make
-    INSTALL_COMMAND make install    
-)
-
-# Get source files for Model predictive control optimization
-# Import Coin-Or library for Automatic differentiation
-ExternalProject_Add(Get_Coin_Or_CppAD
-    DEPENDS Get_Coin_Or_Ipopt
-    GIT_REPOSITORY https://github.com/coin-or/CppAD.git
-    DOWNLOAD_DIR ${CPPAD_SRC_LOCATION}/src
-    SOURCE_DIR ${CPPAD_SRC_LOCATION}/src
-    BINARY_DIR ${CPPAD_SRC_LOCATION}/build
-    CMAKE_GENERATOR "Unix Makefiles"
-    CMAKE_ARGS -D CMAKE_BUILD_TYPE=RELEASE
-    CMAKE_ARGS -D cppad_prefix=${CPPAD_SRC_LOCATION}
-    CMAKE_ARGS -D ipopt_prefix=${IPOPT_SRC_LOCATION}/build
-)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -169,26 +133,20 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
+## Declare a C++ library
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/twist_controller.cpp
+# )
 
-# Include libraries for Model predictive control optimization
-include_directories(${CPPAD_SRC_LOCATION}/include ${IPOPT_SRC_LOCATION}/build/include)
-link_directories(${CPPAD_SRC_LOCATION}/lib ${IPOPT_SRC_LOCATION}/build/lib)
 
-
-# Define set of files
 set(SRCS
   src/LowLevelControllerNode.cpp
 )
 
-## Declare a C++ library
 add_library(low_level_controller ${SRCS})
-
 target_link_libraries(low_level_controller
   ${catkin_LIBRARIES}
-  libcppad_ipopt.a
   )
-
-add_custom_target(Get_Coin_Or_Math_Libs ALL DEPENDS Get_Coin_Or_CppAD)
 
 add_executable(low_level_controller_node src/main.cpp)
 target_link_libraries(low_level_controller_node low_level_controller)
@@ -197,9 +155,6 @@ target_link_libraries(low_level_controller_node low_level_controller)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-# Forcing to retrieve maths coin-or libraries before compiling the node
-add_dependencies(low_level_controller Get_Coin_Or_Math_Libs)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
