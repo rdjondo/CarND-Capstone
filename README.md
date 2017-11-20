@@ -1,4 +1,31 @@
-This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
+
+## Git-flow process
+1. Each team member must fork this repository (rdjondo/CarND-Capstone) to their own Github profile. The master branch of this repository will be the "synchronisation" branch.
+2. In the course of their work, team members push their changes to their own Github repository.
+3. Also, the developers regularly pull-in changes from others from the rdjondo/CarND-Capston/master to benefit from the latest changes.
+4. When they are satisfied with their work, the developers can create a "Pull-request" to this repository and to their corresponding branch.
+4. rdjondo will review and integrate the code into the branch develop for testing and then master for synchronisation for the rest of the team.
+
+![Alt text](imgs/git-flow.png?raw=true "Title")
+
+To learn more about the Git-flow process, refer to this [page](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
+
+### Your Github steps
+
+#### Initialising your repository
+1 Fork the repository https://github.com/rdjondo/CarND-Capstone/
+2 Clone your fork to your machine
+3 Change your cloned repo to your branch
+
+#### Work normally
+1. commit changes
+2. Push your changes to your Github fork
+
+#### When your are ready to share your changes
+1 (if there are updates from other devs) pull from  https://github.com/rdjondo/CarND-Capstone/
+2 push to your remote fork
+3 share with a pull request to the same branch on https://github.com/rdjondo/CarND-Capstone/
+
 
 ### Native Installation
 
@@ -67,18 +94,3 @@ cd CarND-Capstone/ros
 roslaunch launch/site.launch
 ```
 5. Confirm that traffic light detection works on real life images
-
-# Git-flow process
-1. Each team member must fork this repository (rdjondo/CarND-Capstone) to their own Github profile. The master branch of this repository will be the "synchronisation" branch.
-2. In the course of their work, team members push their changes to their own Github repository.
-3. Also, the developers regularly pull-in changes from others from the rdjondo/CarND-Capston/master to benefit from the latest changes.
-4. When they are satisfied with their work, the developers can create a "Pull-request" to this repository and to their corresponding branch.
-4. rdjondo will review and integrate the code into the branch develop for testing and then master for synchronisation for the rest of the team.
-
-![Alt text](imgs/git-flow.png?raw=true "Title")
-
-To learn more about the Git-flow process, refer to this [page](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
-
-
-+ Created feature branch for work on traffic-light detection with tensorflow
-+ Created feature branch for work on traffic-light detection without tensorflow (simulation only)

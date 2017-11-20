@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <!-- Package meta info -->
+  <name>carla</name>
+  <version>0.0.0</version>
+  <description>
+   carla description
+  </description>
+
+
+  <license>-</license>
+  <author email="mail@gmail.com">Author</author>
+  <maintainer email="mail@gmail.com">Maintainer</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

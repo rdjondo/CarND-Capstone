@@ -50,8 +50,7 @@ def yaml_to_CameraInfo(calib_yaml):
     camera_info_msg.distortion_model = calib_data["distortion_model"]
     return camera_info_msg
 
-if __name__ == "__main__":
-
+def run_camera_info_publisher():
     calib_yaml = rospy.get_param("/grasshopper_calibration_yaml")
 
     # Parse yaml file
@@ -66,3 +65,12 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         publisher.publish(camera_info_msg)
         rate.sleep()
+
+
+if __name__ == "__main__":
+    
+    try:
+        run_camera_info_publisher()
+
+    except rospy.ROSInterruptException:
+        pass
