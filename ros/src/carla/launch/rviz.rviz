@@ -160,22 +160,21 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        base_footprint:
-          base_link:
-            base_front:
-              {}
-            steer_fl:
-              wheel_fl:
-                {}
-            steer_fr:
-              wheel_fr:
-                {}
-            wheel_rl:
-              {}
-            wheel_rr:
-              {}
         world:
-          {}
+          base_footprint:
+            base_link:
+              base_front:
+                {}
+              steer_fl:
+                wheel_fl:
+                  {}
+              steer_fr:
+                wheel_fr:
+                  {}
+              wheel_rl:
+                {}
+              wheel_rr:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -189,6 +188,22 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /viz_waypoint_updater
+      Name: Traffic Light Stop
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /viz_velocity
+      Name: MarkerArray
+      Namespaces:
+        velocity_vector: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -229,10 +244,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.194796726
+      Pitch: 0.209797114
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.4854157
+      Yaw: 3.2140553
     Saved: ~
 Window Geometry:
   Displays:
