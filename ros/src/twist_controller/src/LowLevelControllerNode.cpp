@@ -92,7 +92,7 @@ void LowLevelControllerNode::process() {
   m_throttle_pub.publish(m_throttle_cmd);
   m_steer_pub.publish(m_steering_cmd);
   m_brake_pub.publish(m_brake_cmd);
-  cout << "Low Level Controller - process" << endl;
+  //  cout << "Low Level Controller - process" << endl;
 }
 
 
