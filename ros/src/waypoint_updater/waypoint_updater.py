@@ -47,6 +47,9 @@ class WaypointUpdater(object):
 
         self.set_speed_mps = rospy.get_param("~set_speed_mps", 13.88)
 
+        self.a_max = rospy.get_param("~A_MAX", 4)
+        self.offset_id_stop_point = rospy.get_param("~offset_id_stop_point", 2)
+
         rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
         
 
@@ -154,10 +157,10 @@ class WaypointUpdater(object):
 
 
           if self.traffic_waypoint_idx > 0:
-	    print "traffic light active"
+	    #print "traffic light active"
 	    self.update_final_waypoints_tl()
 	  else:
-	    print "no traffic light active"
+	    #print "no traffic light active"
 	    ter = 1
 
           self.visualize_velocity_vector()
@@ -229,38 +232,39 @@ class WaypointUpdater(object):
             wp1 = i
         return dist
 
+
+    # update vehicle trajectory if a traffic light is read
     def update_final_waypoints_tl(self):
 
-      a = 2
-      offset_id_stop_point = 2 
       v_ego = self.current_velocity.twist.linear.x
-      distance_to_traffic_light = self.distance(self.waypoints, self.current_pose_id, self.traffic_waypoint_idx-offset_id_stop_point)
+
+      # calculate distance to traffic light
+      distance_to_traffic_light = self.distance(self.waypoints, self.current_pose_id, self.traffic_waypoint_idx-self.offset_id_stop_point)
       points_to_stop = self.traffic_waypoint_idx - self.current_pose_id
+      #print "distance_to_traffic_light: " + str(distance_to_traffic_light)
 
+      # calculate distance to stop
+      required_distance_to_stop = v_ego*v_ego/(2*self.a_max)
+      #print "required_distance_to_stop: " + str(required_distance_to_stop)	
+      #print "vpm: " + str(v_ego / required_distance_to_stop)
 
-      print "distance_to_traffic_light: " + str(distance_to_traffic_light)
-      print self.current_velocity.twist.linear.x
-      a = 4
-      required_distance_to_stop = v_ego*v_ego/(2*a)
-      print "required_distance_to_stop: " + str(required_distance_to_stop)
-	
-      print "vpm: " + str(v_ego / required_distance_to_stop)
+      # car stops, if the stop distance is smaller than the distance to the traffic light
       if distance_to_traffic_light < required_distance_to_stop:
         v_reduction_per_m = v_ego / required_distance_to_stop
 
 	v_tmp = v_ego
         summe = 0
-        print "brake"
-	for i in range(self.current_pose_id,self.traffic_waypoint_idx-offset_id_stop_point):
+        #print "brake"
+	for i in range(self.current_pose_id,self.traffic_waypoint_idx-self.offset_id_stop_point):
           distance_to_next_waypoint = self.distance(self.waypoints, i, i+1)   
 	  summe = summe +  distance_to_next_waypoint
 	  v_segment = v_reduction_per_m * distance_to_next_waypoint
 	  v_tmp = v_tmp - v_segment
-	  print str(i) + ": distance: " + str(distance_to_next_waypoint) +  " v: " + str(v_tmp)  
+	  #print str(i) + ": distance: " + str(distance_to_next_waypoint) +  " v: " + str(v_tmp)  
 
 	  self.set_waypoint_velocity(self.waypoints, i, v_tmp)
 
-        print summe
+        #print summe
       return self.waypoints
 
     def visualize_velocity_vector(self):
