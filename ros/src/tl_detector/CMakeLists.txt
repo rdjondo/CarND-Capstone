@@ -189,6 +189,47 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+
+# To download trained model from the internet
+set(TENSORFLOW_MDL_DIR ${CMAKE_BINARY_DIR}/../src/tl_detector/light_classification)
+
+message( "\n Setting up Tensorflow model used for simulation (GOOGLE SSD MOBILE)" )
+set(TENSORFLOW_SIM_FILE_NAME ${TENSORFLOW_MDL_DIR}/ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb )
+if(EXISTS ${TENSORFLOW_SIM_FILE_NAME})
+  file(MD5 ${TENSORFLOW_SIM_FILE_NAME} CHECKSUM_SIM_FILE)
+else()
+  set(CHECKSUM_SIM_FILE invalid_checksum)
+endif()
+message( "Checksum ${TENSORFLOW_SIM_FILE_NAME} : ${CHECKSUM_SIM_FILE} " )
+set(EXPECTED_SIM_HASH f0158b9e01424dc5bd20f000bcdad847)
+if( NOT ( "${EXPECTED_SIM_HASH}" STREQUAL "${CHECKSUM_SIM_FILE}" ) )
+  set(TENSORFLOW_SIM_MDL_URL https://dl.dropboxusercontent.com/s/bzc49rxw8ox8a3y/ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb?dl=0 )
+  file(
+    DOWNLOAD ${TENSORFLOW_SIM_MDL_URL} ${TENSORFLOW_SIM_FILE_NAME}
+    EXPECTED_MD5 ${EXPECTED_SIM_HASH}
+    SHOW_PROGRESS
+  )
+endif()
+
+message( "\n Setting up Tensorflow model used for execution in vehicle (RESNET 101) " )
+set(TENSORFLOW_SITE_FILE_NAME ${TENSORFLOW_MDL_DIR}/rfcn_resnet101_coco_11_06_2017_frozen_inference_graph.pb )
+if(EXISTS ${TENSORFLOW_SITE_FILE_NAME})
+  file(MD5 ${TENSORFLOW_SITE_FILE_NAME} CHECKSUM_SITE_FILE)
+else()
+  set(CHECKSUM_SITE_FILE invalid_checksum)
+endif()
+message( "Checksum ${TENSORFLOW_SITE_FILE_NAME} : ${CHECKSUM_SITE_FILE} \n " )
+set(EXPECTED_SITE_HASH c7927969f3a0e4a553c3485304241a1f )
+if( NOT ( "${EXPECTED_SITE_HASH}" STREQUAL "${CHECKSUM_SITE_FILE}" ) )
+  set(TENSORFLOW_SITE_MDL_URL https://dl.dropboxusercontent.com/s/dbojosvora1otr3/rfcn_resnet101_coco_11_06_2017_frozen_inference_graph.pb?dl=0 )
+  file(
+    DOWNLOAD ${TENSORFLOW_SITE_MDL_URL} ${TENSORFLOW_SITE_FILE_NAME}
+    EXPECTED_MD5 ${EXPECTED_SITE_HASH}
+    SHOW_PROGRESS
+  )
+endif()
+
+
 #############
 ## Testing ##
 #############

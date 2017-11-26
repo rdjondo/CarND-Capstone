@@ -111,6 +111,8 @@ class DBWNode(object):
                     self.dbw_switch_on = True
                     self.controller.reset()
                 self.publish(throttle, brake, steer)
+            
+            # Sleep until next execution step
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
@@ -132,5 +134,9 @@ class DBWNode(object):
         self.brake_pub.publish(bcmd)
 
 
+
 if __name__ == '__main__':
-    DBWNode()
+    try:
+        DBWNode()
+    except rospy.ROSInterruptException:
+        pass

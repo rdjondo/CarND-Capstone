@@ -26,4 +26,5 @@
 
     <include file="$(find carla)/launch/base.launch"/>
     <include file="$(find carla)/launch/rviz.launch"/>
+
 </launch>
