@@ -3,7 +3,7 @@
     <node pkg="waypoint_updater" type="waypoint_updater.py" name="waypoint_updater" output="screen" >
       <param name="speed_modification" value="True" /> 
       <param name="set_speed_mps" value="22.22" /> 
-      <param name="A_MAX" value="3" /> 
+      <param name="A_MAX" value="10" /> 
       <param name="offset_id_stop_point" value="4" /> 
     </node>
 </launch>

@@ -48,6 +48,7 @@ class WaypointUpdater(object):
         self.set_speed_mps = rospy.get_param("~set_speed_mps", 13.88)
 
         self.a_max = rospy.get_param("~A_MAX", 4)
+        self.a_min = 1
         self.offset_id_stop_point = rospy.get_param("~offset_id_stop_point", 2)
 
         rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
@@ -69,6 +70,9 @@ class WaypointUpdater(object):
         self.current_velocity = TwistStamped()
         self.final_waypoints = Lane()
         self.traffic_waypoint_idx = -1
+
+
+        self.END_SPEED_PLAN_OFFSET = 50 
 
         self.base_frame = "base_footprint"
         self.map_frame = "world"
@@ -133,7 +137,7 @@ class WaypointUpdater(object):
 
           id_waypoint = self.current_pose_id
           for i in range(0,LOOKAHEAD_WPS):
-            id_waypoint = id_waypoint + 1;
+            id_waypoint = id_waypoint + 1
             if ( id_waypoint >= len(self.waypoints)):
               id_waypoint = 1
 
@@ -155,10 +159,10 @@ class WaypointUpdater(object):
 
 
           if self.traffic_waypoint_idx > 0:
-            print "traffic light active"
+            #print "traffic light active"
             self.update_final_waypoints_tl()
           else:
-            print "no valid traffic light index"
+            #print "no valid traffic light index"
             ter = 1
 
           self.visualize_velocity_vector()
@@ -172,11 +176,6 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         # TODO: Implement
         self.waypoints = waypoints.waypoints
-
-
-	
-
-
         pass
 
     def traffic_cb(self, msg):
@@ -187,7 +186,10 @@ class WaypointUpdater(object):
         marker.header.frame_id = self.map_frame
         marker.header.stamp = rospy.Time.now()
         marker.ns = "traffic_light_stop_pose"
-        marker.id = 0;
+        marker.id = 0
+
+        rospy.loginfo ('WP_U: traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) )
+  
 
         if self.traffic_waypoint_idx > 0 and self.traffic_waypoint_idx < len(self.waypoints):
           marker.type = Marker.SPHERE
@@ -201,10 +203,14 @@ class WaypointUpdater(object):
           marker.color.g = 0.0
           marker.color.b = 0.0
 
+        elif self.traffic_waypoint_idx == -1:
+          marker.action = Marker.DELETE
+          rospy.loginfo ('WP_U: No red light detected. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) ) 
+
         else:
           marker.action = Marker.DELETE
-          print "invalid traffic light index"
-	  
+          rospy.loginfo ('WP_U: Index invalid. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) )
+  
         self.viz_traffic_light_marker_pub.publish(marker)
         pass
 
@@ -242,24 +248,29 @@ class WaypointUpdater(object):
       #print "distance_to_traffic_light: " + str(distance_to_traffic_light)
 
       # calculate distance to stop
-      required_distance_to_stop = v_ego*v_ego/(2*self.a_max)
+      acceleration = max(min(v_ego*v_ego/(2*distance_to_traffic_light), self.a_max), self.a_min)
+      required_distance_to_stop = v_ego*v_ego/(2*acceleration)
       #print "required_distance_to_stop: " + str(required_distance_to_stop)	
       #print "vpm: " + str(v_ego / required_distance_to_stop)
 
       # car stops, if the stop distance is smaller than the distance to the traffic light
       if distance_to_traffic_light < required_distance_to_stop:
-        v_reduction_per_m = v_ego / required_distance_to_stop
+        v_reduction_per_m = v_ego / required_distance_to_stop if required_distance_to_stop > 1e-1 else 0.0
 
         v_tmp = v_ego
         summe = 0
         #print "brake"
-        for i in range(self.current_pose_id,self.traffic_waypoint_idx-self.offset_id_stop_point):
-          distance_to_next_waypoint = self.distance(self.waypoints, i, i+1)   
-          summe = summe +  distance_to_next_waypoint
-          v_segment = v_reduction_per_m * distance_to_next_waypoint
-          v_tmp = v_tmp - v_segment
+        #for i in range(self.current_pose_id, self.traffic_waypoint_idx-self.offset_id_stop_point):
+        for i in range(self.current_pose_id, self.current_pose_id + self.END_SPEED_PLAN_OFFSET):
+          if i<self.traffic_waypoint_idx-self.offset_id_stop_point:
+            distance_to_next_waypoint = self.distance(self.waypoints, i, i+1)   
+            summe = summe +  distance_to_next_waypoint
+            v_segment = v_reduction_per_m * distance_to_next_waypoint
+            v_tmp = v_tmp - v_segment
+          else:
+            v_tmp = 0.0
           #print str(i) + ": distance: " + str(distance_to_next_waypoint) +  " v: " + str(v_tmp)  
-	  self.set_waypoint_velocity(self.waypoints, i, v_tmp)
+          self.set_waypoint_velocity(self.waypoints, i, v_tmp)
 
         #print summe  
       return self.waypoints
@@ -273,7 +284,7 @@ class WaypointUpdater(object):
       marker.id = 0;
       marker.pose.orientation.w = 1.0
 
-      for i in range(0,50,2):
+      for i in range(0, self.END_SPEED_PLAN_OFFSET, 2):
         marker.type = Marker.LINE_STRIP
         marker.action = Marker.ADD
         marker.scale.x = 0.3
