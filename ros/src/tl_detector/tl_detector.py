@@ -199,7 +199,7 @@ class TLDetector(object):
             rospy.loginfo('TLD: Car position waypoints index: {}'.format(car_position))
             rospy.loginfo('TLD: Closest front stop line waypoints index: {}'.format(light))
             rospy.loginfo('TLD: Detected light status: {}'.format(state))
-        return light, state
+            return light, state
 
         self.waypoints = None
         return -1, TrafficLight.UNKNOWN
