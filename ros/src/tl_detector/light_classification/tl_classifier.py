@@ -15,7 +15,8 @@ except ImportError:
     import TrafficLight
 
 
-FILE_MODEL        = 'ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb' # f0158b9e01424dc5bd20f000bcdad847
+FILE_MODEL_SIMULATOR   = 'ssd_mobilenet_v1_coco_11_06_2017_frozen_inference_graph.pb'  # f0158b9e01424dc5bd20f000bcdad847
+FILE_MODEL_SITE        =   'rfcn_resnet101_coco_11_06_2017_frozen_inference_graph.pb'  # c7927969f3a0e4a553c3485304241a1f
 
 THRESH_SCORE      = 0.2
 TL_CLASS          = 10  # COCO
@@ -23,13 +24,20 @@ TL_CLASS          = 10  # COCO
 LIGHT_NAMES = 'RED YELLOW GREEN undefined UNKNOWN'.split()
 
 class TLClassifier(object):
-    def __init__(self):
+    def __init__(self, running_in_simulator = False):
         """
-        Loads a pretrained SSD detector and intializes a TF session.
+        Loads a pre-trained SSD detector and initializes a TF session.
         """
 
+        self._running_in_simulator = running_in_simulator # rospy.get_param('/running_in_simulator')
+
         try:
-            path_to_model = '{}/{}'.format(os.path.dirname (os.path.realpath(__file__)), FILE_MODEL)
+            if self._running_in_simulator:
+                file_model = FILE_MODEL_SIMULATOR
+            else:
+                file_model = FILE_MODEL_SITE
+
+            path_to_model = '{}/{}'.format(os.path.dirname (os.path.realpath(__file__)), file_model)
 
             rospy.loginfo ('\n\n\nInitializing tensorflow model from ' + path_to_model)
 
@@ -75,9 +83,9 @@ class TLClassifier(object):
         )
 
         # sanity checks of boxes [y0,x0,y1,x1]. Shape is 1,100,4
-        np.testing.assert_array_less(boxes[..., 0], boxes[..., 2])  # y0 < y1 must hold for every BB
-        np.testing.assert_array_less(boxes[..., 1], boxes[..., 3])  # x0 < x1 must hold for every BB
-        np.testing.assert_array_less(classes, 90)                   # 90 classes in COCO
+        #np.testing.assert_array_less(boxes[..., 0], boxes[..., 2])  # y0 < y1 must hold for every BB
+        #np.testing.assert_array_less(boxes[..., 1], boxes[..., 3])  # x0 < x1 must hold for every BB
+        #NP.testing.assert_array_less(classes, 90)                   # 90 classes in COCO
 
         # bring relative coordinates to image coordinates
         boxes *= [image.shape[0], image.shape[1], image.shape[0], image.shape[1]]
@@ -100,41 +108,49 @@ class TLClassifier(object):
         TrafficLight.UNKNOWN, TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN
         """
 
-        thresh_hue = 0, 15, 45, 90   # threshold to separate red yellow green and rest in the HSV space
-        thresh_area_ratio = 0.01     # classification will be ignored if area ratio is smaller
-
-        result = 3 # if nothing detected -> UNKNOWN
+        result = TrafficLight.UNKNOWN
 
         y0, x0, y1, x1 = bbox
         crop = image[y0:y1, x0:x1]
 
+        if self._running_in_simulator:
+            thresh_hue = 0, 15, 45, 90  # threshold to separate red yellow green and rest in the HSV space
+            thresh_area_ratio = 0.01  # classification will be ignored if area ratio is smaller
 
-        hsv = cv2.cvtColor (crop, cv2.COLOR_RGB2HSV)
-        mask = np.zeros_like(hsv)
+            hsv = cv2.cvtColor (crop, cv2.COLOR_RGB2HSV)
+            mask = np.zeros_like(hsv)
 
-        # both hsv and mask are of shape (rows, cols, 3)
-        for i in range(3):
-            lower = np.array ([ thresh_hue[i  ],   0, 200 ])
-            upper = np.array ([ thresh_hue[i+1], 255, 255 ])
+            # both hsv and mask are of shape (rows, cols, 3)
+            for i in range(3):
+                lower = np.array ([ thresh_hue[i  ],   0, 200 ])
+                upper = np.array ([ thresh_hue[i+1], 255, 255 ])
 
-            mask [..., i] = cv2.inRange (hsv, lower, upper)
+                mask [..., i] = cv2.inRange (hsv, lower, upper)
 
-#       area_ratios = np.count_nonzero(mask, axis=(0, 1)) / np.product(mask.shape[:2])
-        area_ratios = np.array ([
-             np.count_nonzero(mask[...,0]),
-             np.count_nonzero(mask[...,1]),
-             np.count_nonzero(mask[...,2]),
-        ], dtype=np.float) / np.product(mask.shape[:2])
+    #       area_ratios = np.count_nonzero(mask, axis=(0, 1)) / np.product(mask.shape[:2])
+            area_ratios = np.array ([
+                 np.count_nonzero(mask[...,0]),
+                 np.count_nonzero(mask[...,1]),
+                 np.count_nonzero(mask[...,2]),
+            ], dtype=np.float) / np.product(mask.shape[:2])
 
-        if (area_ratios > thresh_area_ratio).any():
-            result = area_ratios.argmax()
+            if (area_ratios > thresh_area_ratio).any():
+                result = area_ratios.argmax()
 
-        rospy.loginfo ('TLC: Box Hue ratios = {:.3f} {:.3f} {:.3f} => {}'.format(
-            area_ratios[0], area_ratios[1], area_ratios[2],
-            LIGHT_NAMES [result]
-        ))
+            rospy.loginfo ('TLC: Box Hue ratios = {:.3f} {:.3f} {:.3f} => {}'.format(
+                area_ratios[0], area_ratios[1], area_ratios[2],
+                LIGHT_NAMES [result]
+            ))
 
-        return [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN] [result]
+        else: # site track
+            # RFCN yields quite accurate boxes and we'll rely on which vertical third is the brightest
+            height,width,depth = crop.shape
+            gray     = crop * [.21, .71, .07]             # to gray
+            yOff     = height % 3                         # we'll need height be a factor of 3
+            gray3    = gray[yOff:].reshape(3, -1, width)  # gray3 is of shape (3, height/3, width)
+            result   = gray3.sum(axis=(1, 2)).argmax()    # sum over vertical regions and yield one that was max
+
+        return [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN, TrafficLight.UNKNOWN] [result]
 
 
 
@@ -160,17 +176,19 @@ class TLClassifier(object):
             # SSD to yield TL boxes and scores
             tl_boxes, tl_scores = self.get_boxes(image)
 
-            # classify only the box with highest confidence
-            # result = self.classify_bbox (image, tl_boxes[0])
-
             # classify all detected lights
             lights = np.array ([self.classify_bbox(image, bbox) for bbox in tl_boxes])
 
 #            rospy.loginfo ('TLC: Colours {}', format (lights))
 
-            # in simulator require 2 or 3 lights of the same colour, 1 is not enough
-            if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
-                result = lights[0]
+            if self._running_in_simulator:
+                # in simulator require 2 or 3 lights of the same colour, 1 is not enough
+                if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
+                    result = lights[0]
+            else: # site track
+                # in real track we'll have only one TL. If more have been detected, take just the first (hi-confident) one
+                if len (lights):
+                    result = lights[0]
 
             rospy.loginfo ('TLC: Overall light prediction: {}'.format (LIGHT_NAMES[result]))
 
@@ -178,13 +196,3 @@ class TLClassifier(object):
             rospy.logwarn ('TLC: {}'.format (e))
 
         return result
-
-
-
-if __name__ == '__main__':
-    TLC = TLClassifier()
-
-    for fn in 'tl_0_g.png frame_009275.jpg simss0.jpg tl.jpg tl2.jpg tl3.jpg'.split() [:1]:
-        image = cv2.imread(fn) [...,:3]# [::-1] # BGR to RGB
-        print (fn,TLC.get_classification(image))
-        print ()

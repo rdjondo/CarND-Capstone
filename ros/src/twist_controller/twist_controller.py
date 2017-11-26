@@ -20,11 +20,14 @@ class Controller(object):
         tau = 0.08
         ts = 0.02
 
+        MAX_SPEED = 8 # Speed in MPS
+
         self.steer_ratio = steer_ratio
         self.decel_limit = decel_limit
         self.accel_limit = accel_limit
         self.brake_deadband = brake_deadband
         self.min_speed = min_speed
+        self.max_speed = MAX_SPEED
         self.max_lat_accel = max_lat_accel
         self.max_steer_angle = max_steer_angle
         self.throttle_pid = PID(kp, ki, kd, self.decel_limit, self.accel_limit)
@@ -43,6 +46,8 @@ class Controller(object):
 
         #
         time_diff =  current_timestamp - self.timestamp
+
+        target_velocity = min(target_velocity, self.max_speed)
 
         if time_diff > 1e-3:
             velocity_diff = target_velocity - current_velocity
