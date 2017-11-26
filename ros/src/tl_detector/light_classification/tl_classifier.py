@@ -96,7 +96,7 @@ class TLClassifier(object):
         scores  =  scores.squeeze()
 
         i_filtered = np.argwhere((classes == TL_CLASS) & (scores > min_score)).flatten()
-        rospy.loginfo ('TLC: Box scores {}'.format (scores[i_filtered]))
+        #rospy.loginfo ('TLC: Box scores {}'.format (scores[i_filtered]))
 
         return boxes[i_filtered], scores[i_filtered]
 
@@ -137,10 +137,7 @@ class TLClassifier(object):
             if (area_ratios > thresh_area_ratio).any():
                 result = area_ratios.argmax()
 
-            rospy.loginfo ('TLC: Box Hue ratios = {:.3f} {:.3f} {:.3f} => {}'.format(
-                area_ratios[0], area_ratios[1], area_ratios[2],
-                LIGHT_NAMES [result]
-            ))
+            #rospy.loginfo ('TLC: Box Hue ratios = {:.3f} {:.3f} {:.3f} => {}'.format(area_ratios[0], area_ratios[1], area_ratios[2],LIGHT_NAMES [result]))
 
         else: # site track
             # RFCN yields quite accurate boxes and we'll rely on which vertical third is the brightest
@@ -190,7 +187,7 @@ class TLClassifier(object):
                 if len (lights):
                     result = lights[0]
 
-            rospy.loginfo ('TLC: Overall light prediction: {}'.format (LIGHT_NAMES[result]))
+            #rospy.loginfo ('TLC: Overall light prediction: {}'.format (LIGHT_NAMES[result]))
 
         except Exception as e:
             rospy.logwarn ('TLC: {}'.format (e))
