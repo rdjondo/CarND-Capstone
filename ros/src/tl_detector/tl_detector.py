@@ -76,7 +76,7 @@ class TLDetector(object):
         rospy.loginfo('TLD: process traffic light returnb: light wp:{}, state: {}'.format(light_wp,state))
 
 
-	#rospy.loginfo ('TLD: process traffic lights return ({}, {})'.format (light_wp,state))
+        #rospy.loginfo ('TLD: process traffic lights return ({}, {})'.format (light_wp,state))
 
         '''
         Publish upcoming red lights at camera frequency.
@@ -93,10 +93,10 @@ class TLDetector(object):
                 light_wp = light_wp if state == TrafficLight.RED else -1
                 self.last_wp = light_wp
                 self.upcoming_red_light_pub.publish(Int32(light_wp))
-		rospy.loginfo('TLD:     Light wp topic: {}'.format(Int32(light_wp)))
+                rospy.loginfo('TLD:     Light wp topic: {}'.format(Int32(light_wp)))
             else:
                 self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-		rospy.loginfo('TLD:     Light wp topic: {}'.format(Int32(self.last_wp)))
+                rospy.loginfo('TLD:     Light wp topic: {}'.format(Int32(self.last_wp)))
 
             self.state_count += 1
             self.ros_sleep.sleep()
@@ -175,7 +175,7 @@ class TLDetector(object):
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
             car_position = self.get_closest_waypoint(self.pose.pose)
-	else:
+        else:
             return -1, TrafficLight.UNKNOWN
 
         # Find the waypoint index of the closest front traffic light stop line to the car.
