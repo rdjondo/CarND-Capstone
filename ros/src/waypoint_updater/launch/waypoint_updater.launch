@@ -4,6 +4,6 @@
       <param name="speed_modification" value="True" /> 
       <param name="set_speed_mps" value="22.22" /> 
       <param name="A_MAX" value="3" /> 
-      <param name="offset_id_stop_point" value="4" /> 
+      <param name="offset_id_stop_point" value="6" /> 
     </node>
 </launch>
