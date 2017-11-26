@@ -47,8 +47,10 @@ class WaypointUpdater(object):
 
         self.set_speed_mps = rospy.get_param("~set_speed_mps", 13.88)
 
+        # Acceleration values
         self.a_max = rospy.get_param("~A_MAX", 4)
-        self.a_min = 1
+        self.a_min = 1.0
+
         self.offset_id_stop_point = rospy.get_param("~offset_id_stop_point", 2)
 
         rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
@@ -187,10 +189,7 @@ class WaypointUpdater(object):
         marker.header.stamp = rospy.Time.now()
         marker.ns = "traffic_light_stop_pose"
         marker.id = 0
-
-        rospy.loginfo ('WP_U: traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) )
-  
-
+        
         if self.traffic_waypoint_idx > 0 and self.traffic_waypoint_idx < len(self.waypoints):
           marker.type = Marker.SPHERE
           marker.action = Marker.ADD
@@ -205,11 +204,11 @@ class WaypointUpdater(object):
 
         elif self.traffic_waypoint_idx == -1:
           marker.action = Marker.DELETE
-          rospy.loginfo ('WP_U: No red light detected. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) ) 
+          #rospy.loginfo ('WP_U: No red light detected. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) ) 
 
         else:
           marker.action = Marker.DELETE
-          rospy.loginfo ('WP_U: Index invalid. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) )
+          #rospy.loginfo ('WP_U: Index invalid. traffic_waypoint_idx : {}, len(waypoints) : {})'.format (self.traffic_waypoint_idx, len(self.waypoints)) )
   
         self.viz_traffic_light_marker_pub.publish(marker)
         pass
@@ -245,13 +244,12 @@ class WaypointUpdater(object):
       # calculate distance to traffic light
       distance_to_traffic_light = self.distance(self.waypoints, self.current_pose_id, self.traffic_waypoint_idx-self.offset_id_stop_point)
       points_to_stop = self.traffic_waypoint_idx - self.current_pose_id
-      #print "distance_to_traffic_light: " + str(distance_to_traffic_light)
 
-      # calculate distance to stop
-      acceleration = max(min(v_ego*v_ego/(2*distance_to_traffic_light), self.a_max), self.a_min)
-      required_distance_to_stop = v_ego*v_ego/(2*acceleration)
-      #print "required_distance_to_stop: " + str(required_distance_to_stop)	
-      #print "vpm: " + str(v_ego / required_distance_to_stop)
+
+
+      required_distance_to_stop = v_ego*v_ego/(2*self.a_min)
+
+      #rospy.loginfo("distance_to_traffic_light: {}, required_distance_to_stop: {} ".format(distance_to_traffic_light, required_distance_to_stop))
 
       # car stops, if the stop distance is smaller than the distance to the traffic light
       if distance_to_traffic_light < required_distance_to_stop:

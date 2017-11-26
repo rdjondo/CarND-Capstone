@@ -50,7 +50,7 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
             
-        self.ros_sleep = rospy.Rate(15)
+        #self.ros_sleep = rospy.Rate(25)
 
         rospy.spin()
     
@@ -96,7 +96,7 @@ class TLDetector(object):
             else:
                 self.upcoming_red_light_pub.publish(Int32(self.last_wp))
             self.state_count += 1
-            self.ros_sleep.sleep()
+            #self.ros_sleep.sleep()
         except AttributeError:
             pass
 
@@ -184,7 +184,9 @@ class TLDetector(object):
             stop_line_wp = self.get_closest_waypoint(stop_line_pose)
 
 	    # update only when front stop line is closer in comparison to the old one.
-	    if (stop_line_wp >= car_position and stop_line_wp < light):
+	    # keep seeing traffic light a few waypoints behind
+	    SEE_BEHIND_WAYPOINTS = 2
+	    if (stop_line_wp + SEE_BEHIND_WAYPOINTS >= car_position and stop_line_wp < light):
 	        light = stop_line_wp
 
 
