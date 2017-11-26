@@ -23,4 +23,7 @@
 
     <!--Camera Info Publisher -->
     <include file="$(find camera_info_publisher)/launch/camera_info_publisher.launch"/>
+
+    <include file="$(find carla)/launch/base.launch"/>
+    <include file="$(find carla)/launch/rviz.launch"/>
 </launch>

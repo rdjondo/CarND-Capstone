@@ -33,8 +33,8 @@ class TLDetector(object):
         simulator. When testing on the vehicle, the color state will not be available. You'll need to
         rely on the position of the light and the camera image to predict it.
         '''
-        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
-        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
+        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb,  queue_size=1)
+        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb,  queue_size=1)
 
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
@@ -42,15 +42,18 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(self.config['running_in_simulator'])
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+            
+        #self.ros_sleep = rospy.Rate(25)
 
         rospy.spin()
+    
 
     def pose_cb(self, msg):
         self.pose = msg
@@ -81,17 +84,22 @@ class TLDetector(object):
         of times till we start using it. Otherwise the previous stable state is
         used.
         '''
-        if self.state != state:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
-            self.last_state = self.state
-            light_wp = light_wp if state == TrafficLight.RED else -1
-            self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
-        else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-        self.state_count += 1
+        try:
+            if self.state != state:
+                self.state_count = 0
+                self.state = state
+            elif self.state_count >= STATE_COUNT_THRESHOLD:
+                self.last_state = self.state
+                light_wp = light_wp if state == TrafficLight.RED else -1
+                self.last_wp = light_wp
+                self.upcoming_red_light_pub.publish(Int32(light_wp))
+            else:
+                self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+            self.state_count += 1
+            #self.ros_sleep.sleep()
+        except AttributeError:
+            pass
+
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
@@ -143,7 +151,11 @@ class TLDetector(object):
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
 
         #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        try:
+            light_id = self.light_classifier.get_classification(cv_image)
+        except AttributeError:
+            light_id = -1 
+        return light_id
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -172,7 +184,9 @@ class TLDetector(object):
             stop_line_wp = self.get_closest_waypoint(stop_line_pose)
 
 	    # update only when front stop line is closer in comparison to the old one.
-	    if (stop_line_wp >= car_position and stop_line_wp < light):
+	    # keep seeing traffic light a few waypoints behind
+	    SEE_BEHIND_WAYPOINTS = 2
+	    if (stop_line_wp + SEE_BEHIND_WAYPOINTS >= car_position and stop_line_wp < light):
 	        light = stop_line_wp
 
 
