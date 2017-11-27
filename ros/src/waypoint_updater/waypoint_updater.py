@@ -120,6 +120,9 @@ class WaypointUpdater(object):
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
         for i in range(id_start,id_end):
+            # Defensive test
+            if i>=len(self.waypoints): return
+
             distance= dl(self.waypoints[i].pose.pose.position, self.current_pose.pose.position)
             if distance < closest_distance:
                 closest_distance = distance
@@ -236,8 +239,13 @@ class WaypointUpdater(object):
     def distance(self, waypoints, wp1, wp2):
         dist = 0
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        wp2 = max( min(wp2, len(waypoints)-1) , 0) #Defensive indexing
         for i in range(wp1, wp2+1):
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            pos1 = waypoints[wp1].pose.pose.position
+            if not ( 0 < i < len(waypoints) ):
+                rospy.logwarn('Waypoint Index is out of range i:{}'.format(i))
+            pos2 = waypoints[i].pose.pose.position
+            dist += dl(pos1, pos2)
             wp1 = i
         return dist
 
