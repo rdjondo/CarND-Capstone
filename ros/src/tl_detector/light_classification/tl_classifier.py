@@ -182,7 +182,11 @@ class TLClassifier(object):
                 # in simulator require 2 or 3 lights of the same colour, 1 is not enough
                 #if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
                 if (1 <= len(lights) <= 3) :
-                    result = lights[0]
+                    if (lights == TrafficLight.RED).any() or (lights == TrafficLight.YELLOW).any():
+                        result = TrafficLight.RED
+                    else:
+                        result = lights[0]  # This is always Green light
+                
             else: # site track
                 # in real track we'll have only one TL. If more have been detected, take just the first (hi-confident) one
                 if len (lights):
