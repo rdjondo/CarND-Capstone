@@ -1,9 +1,9 @@
 ## Robodrive Team composition
-Leader:     Raphael Djondo	    raphaeldjondo@gmail.com	
-Member 1:	Markus Schratter	m.schratter@gmx.at
-Member 2:	Narisu Tao	        taonarisu@gmail.com
-Member 3:	Lampros Fotiadis	lampros.fotiadis@gmail.com
-Member 4:   Jiri Hladuvka   	hladuvka@gmail.com
+Leader:     Raphael Djondo	    raphaeldjondo@gmail.com	       
+Member 1:	Markus Schratter	m.schratter@gmx.at	       
+Member 2:	Narisu Tao	        taonarisu@gmail.com	       
+Member 3:	Lampros Fotiadis	lampros.fotiadis@gmail.com	       
+Member 4:   Jiri Hladuvka   	hladuvka@gmail.com	       
 
 
 ### Native Installation
