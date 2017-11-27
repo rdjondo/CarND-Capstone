@@ -7,6 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from nav_msgs.msg import Path
 from std_msgs.msg import Int32
+from std_msgs.msg import Float64
 from visualization_msgs.msg import *
 from geometry_msgs.msg import *
 from copy import deepcopy
@@ -43,9 +44,8 @@ class WaypointUpdater(object):
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
         rospy.Subscriber('/current_velocity', TwistStamped, self.velocity_cb)
 
+        rospy.Subscriber('/max_velocity', Float64, self.max_velocity_cb, queue_size=1)
 
-
-        self.set_speed_mps = rospy.get_param("~set_speed_mps", 13.88)
 
         # Acceleration values
         self.a_max = rospy.get_param("~A_MAX", 4)
@@ -53,7 +53,6 @@ class WaypointUpdater(object):
 
         self.offset_id_stop_point = rospy.get_param("~offset_id_stop_point", 2)
 
-        rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -66,6 +65,10 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.waypoints = []
         self.transform = None
+
+
+        self.set_speed_mps = 0.0
+        rospy.loginfo("Waypoint_updater - set_speed: %f [m/s]", self.set_speed_mps)
 
         self.current_pose = PoseStamped()
         self.current_pose_id = -1
@@ -80,6 +83,7 @@ class WaypointUpdater(object):
         self.map_frame = "world"
 
         rospy.spin()
+
 
     def pose_cb(self, msg):
         # TODO: Implement
@@ -176,9 +180,8 @@ class WaypointUpdater(object):
         pass
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
         self.waypoints = waypoints.waypoints
-        pass
+        
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
@@ -219,7 +222,10 @@ class WaypointUpdater(object):
 
     def velocity_cb(self, msg):
         self.current_velocity = msg
-        pass
+
+    def max_velocity_cb(self, msg):
+        self.set_speed_mps = float(msg.data)
+        rospy.logwarn('MAX velocity is : {}'.format(self.set_speed_mps) )
 
     def get_waypoint_velocity(self, waypoint):
         return waypoint.twist.twist.linear.x
@@ -291,7 +297,7 @@ class WaypointUpdater(object):
         marker.color.g = 1.0
         marker.color.b = 1.0
         point = deepcopy(self.final_waypoints.waypoints[i].pose.pose.position)
-        point.z = point.z + self.get_waypoint_velocity(self.final_waypoints.waypoints[i]) / 6
+        point.z = point.z + self.get_waypoint_velocity(self.final_waypoints.waypoints[i]) / 6.0
         marker.points.append(point)
         marker_array.markers.append(deepcopy(marker))
 
