@@ -85,7 +85,7 @@ class Controller(object):
                 # torque = deceleration force * wheel radius
                 breaking_force = self.total_mass * abs(target_acceleration) * self.wheel_radius
 
-                print("Breaking:",breaking_force)
+                #print("Breaking:",breaking_force)
 
                 if breaking_force < self.brake_deadband:
                     breaking_force = 0.0

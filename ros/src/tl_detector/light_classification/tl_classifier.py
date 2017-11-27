@@ -114,7 +114,7 @@ class TLClassifier(object):
         crop = image[y0:y1, x0:x1]
 
         if self._running_in_simulator:
-            thresh_hue = 0, 15, 45, 90  # threshold to separate red yellow green and rest in the HSV space
+            thresh_hue = 0, 15, 45, 75  # threshold to separate red yellow green and rest in the HSV space
             thresh_area_ratio = 0.01  # classification will be ignored if area ratio is smaller
 
             hsv = cv2.cvtColor (crop, cv2.COLOR_RGB2HSV)
@@ -180,7 +180,8 @@ class TLClassifier(object):
 
             if self._running_in_simulator:
                 # in simulator require 2 or 3 lights of the same colour, 1 is not enough
-                if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
+                #if (2 <= len(lights) <= 3) and (lights == lights[0]).all():
+                if (1 <= len(lights) <= 3) :
                     result = lights[0]
             else: # site track
                 # in real track we'll have only one TL. If more have been detected, take just the first (hi-confident) one
